@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "mnemona",
+  "productName": "Mnemona",
   "version": "0.1.0",
   "identifier": "com.glicomak.mnemona",
   "build": {
@@ -12,9 +12,8 @@
   "app": {
     "windows": [
       {
-        "title": "mnemona",
-        "width": 800,
-        "height": 600
+        "title": "Mnemona",
+        "maximized": true
       }
     ],
     "security": {
