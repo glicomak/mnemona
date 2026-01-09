@@ -95,7 +95,7 @@ function Dashboard() {
 
   return (
     <div>
-      <h1 className="text-xl mb-4">Dashboard</h1>
+      <h1 className="text-xl my-4">Dashboard</h1>
       {modules.map((module) => (
         <Module key={module.course.id} module={module} />
       ))}
