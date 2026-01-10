@@ -1,3 +1,8 @@
+type DepartmentDraft = {
+  code: string,
+  name: string
+}
+
 type Department = {
   id: string,
   code: string,
@@ -15,6 +20,14 @@ type Week = {
   serial: number,
   text: string,
   targets: Targets[]
+}
+
+type CourseDraft = {
+  department: string,
+  name: string,
+  description: string,
+  book: string,
+  prompt: string
 }
 
 type Course = {

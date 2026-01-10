@@ -5,7 +5,7 @@ function Layout() {
   return (
     <div className="w-[60%] m-auto">
       <Navbar />
-      <main>
+      <main className="pb-4">
         <Outlet />
       </main>
     </div>

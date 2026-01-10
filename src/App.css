@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+@layer components {
+  .button-primary {
+    @apply bg-[#42b773] text-[#ffffff] border border-[#42b773] px-4 py-2 mt-2 mb-4 rounded-lg transition-colors;
+  }
+
+  .button-secondary {
+    @apply bg-[#ffffff] text-[#42b773] border border-[#42b773] px-4 py-2 mt-2 mb-4 rounded-lg transition-colors;;
+  }
+
+  .button-primary:hover, .button-secondary:hover {
+    @apply bg-[#54a375] text-[#ffffff] border-[#54a375]
+  }
+
+  .button-primary:active, .button-secondary:active {
+    @apply bg-[#448961] text-[#ffffff] border-[#448961]
+  }
+}

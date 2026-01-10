@@ -2,11 +2,9 @@ import { NavLink } from "react-router-dom";
 
 function Navbar() {
   return (
-    <header className="w-full border-b border-neutral-200">
-      <div className="py-4 flex items-center justify-between">
-        <span className="text-xl font-medium tracking-wider">
-          MNEMONA
-        </span>
+    <header className="h-16 border-b border-neutral-200 m-auto sticky top-0 bg-white/80 backdrop-blur-sm z-50">
+      <div className="h-full py-4 flex items-center justify-between">
+        <span className="text-xl font-medium tracking-wider">MNEMONA</span>
 
         <nav className="flex items-center gap-8">
           <NavLink

@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS courses (
     name TEXT NOT NULL,
     description TEXT,
     book TEXT,
+    prompt TEXT,
     FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE CASCADE
 );
 
@@ -30,6 +31,6 @@ CREATE TABLE IF NOT EXISTS targets (
     FOREIGN KEY (week_id) REFERENCES weeks (id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_courses_dept ON courses(department_id);
+CREATE INDEX IF NOT EXISTS idx_courses_department ON courses(department_id);
 CREATE INDEX IF NOT EXISTS idx_weeks_course ON weeks(course_id);
 CREATE INDEX IF NOT EXISTS idx_targets_week ON targets(week_id);
