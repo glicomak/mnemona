@@ -6,6 +6,8 @@ use tauri::Manager;
 
 use crate::commands::courses::{create_courses, get_course, get_courses, update_course};
 use crate::commands::departments::get_departments;
+use crate::commands::targets::change_target_status;
+use crate::commands::weeks::change_week_status;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -29,7 +31,9 @@ pub fn run() {
             get_course,
             get_courses,
             update_course,
-            get_departments
+            get_departments,
+            change_target_status,
+            change_week_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -23,6 +23,7 @@ pub struct TargetDraft {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Target {
     pub id: String,
     pub serial: i64,
@@ -39,6 +40,7 @@ pub struct WeekDraft {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Week {
     pub id: String,
     pub serial: i64,

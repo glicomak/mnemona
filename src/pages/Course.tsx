@@ -4,6 +4,8 @@ import { invoke } from "@tauri-apps/api/core";
 
 import { GoogleGenAI } from "@google/genai";
 
+import WeekBox from "../components/WeekBox";
+
 function Course() {
   const { id } = useParams();
 
@@ -33,12 +35,11 @@ function Course() {
 
   useEffect(() => {
     invoke<Course>("get_course", { courseId: id }).then((data) => {
-      setCourse(data)
+      setCourse(data);
       if (data.weeks.length == 0) {
         setPrompt(data.prompt);
       }
     });
-
   }, []);
 
   async function enhance() {
@@ -82,7 +83,6 @@ ${prompt}
 Course:
 ${JSON.stringify(courseContent, null, 4)}
 `;
-
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: [
@@ -125,18 +125,7 @@ ${JSON.stringify(courseContent, null, 4)}
           onChange={(e) => setPrompt(e.target.value)}
         />
         <button onClick={enhance} className="button-primary mr-2">Prompt</button>
-        {course?.weeks.map((week) => (
-          <div key={week.id} className="bg-[#e0e4ea] p-4 mb-4 rounded-xl">
-            <p className="text-sm font-medium">WEEK-{week.serial}</p>
-            <p className="text-lg mt-1">{week.text}</p>
-            {week.targets.map((target) => (
-              <div key={target.id} className="mt-2">
-                <p>{target.text}</p>
-                <p className="text-sm">{target.source}</p>
-              </div>
-            ))}
-          </div>
-        ))}
+        {course?.weeks.map((week) => <WeekBox key={week.id} week={week} />)}
       </div>
     )
   );

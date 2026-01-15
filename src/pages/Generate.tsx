@@ -64,7 +64,6 @@ ${JSON.stringify(departments, null, 4)}
 Courses:
 ${JSON.stringify(courses, null, 4)}
 `;
-
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: [
