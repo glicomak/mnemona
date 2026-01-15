@@ -23,7 +23,6 @@ function Generate() {
 You are an AI university course generator.
 Your task is to given a list of courses, make adjustements to it as per the user's prompt.
 You might be given an empty list, in which case you are expected to generate the list from scratch.
-Input and output is a list of DraftCourse objects.
 The prompt field is a string that will be passed on to you in the future for generating individual course content.
 Description should be short whereas prompt should be detailed.
 Book must preferably have a specific edition number listed.
@@ -80,7 +79,6 @@ ${JSON.stringify(courses, null, 4)}
         .replace(/```json/g, "")
         .replace(/```/g, "")
         .trim();
-
       const parsed: {
         departments: DepartmentDraft[],
         courses: CourseDraft[]
@@ -95,8 +93,6 @@ ${JSON.stringify(courses, null, 4)}
   }
 
   async function save() {
-    console.log(courses);
-    console.log(departments);
     invoke("create_courses", { courses, departments })
       .then(() => navigate("/courses"));
   }
@@ -105,7 +101,7 @@ ${JSON.stringify(courses, null, 4)}
     <div>
       <h1 className="text-xl my-4">Generate</h1>
       <textarea
-        className="bg-[#f4f5f6] w-full p-4 rounded-xl outline-none"
+        className="bg-[#f4f5f6] w-full h-50 p-4 rounded-xl outline-none"
         placeholder="Enter your prompt here..."
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}

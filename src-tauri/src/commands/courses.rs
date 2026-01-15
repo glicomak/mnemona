@@ -1,10 +1,11 @@
-use std::collections::HashMap;
+use chrono::{DateTime, Utc};
 use sqlx::{SqlitePool, Row};
+use std::collections::HashMap;
 use tauri::State;
 use uuid::Uuid;
 
 use crate::db::DatabaseState;
-use crate::types::{CourseDraft, CoursePreview, Department, DepartmentDraft};
+use crate::types::{Course, CourseContentDraft, CourseDraft, CoursePreview, Department, DepartmentDraft, Target, Week};
 
 async fn generate_course_serial(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
@@ -155,6 +156,132 @@ pub async fn create_courses(
 }
 
 #[tauri::command]
+pub async fn get_course(
+    state: State<'_, DatabaseState>,
+    course_id: String,
+) -> Result<Course, String> {
+    let pool: &SqlitePool = &state.0;
+
+    let row = sqlx::query(
+        r#"
+        SELECT
+          c.id            AS course_id,
+          c.serial        AS course_serial,
+          c.name          AS course_name,
+          c.description   AS course_description,
+          c.book          AS course_book,
+          c.prompt        AS course_prompt,
+          c.status        AS course_status,
+          d.id            AS dept_id,
+          d.code          AS dept_code,
+          d.name          AS dept_name
+        FROM courses c
+        JOIN departments d ON c.department_id = d.id
+        WHERE c.id = ?
+        "#
+    )
+    .bind(&course_id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    let mut course = Course {
+        id: row.get("course_id"),
+        department: Department {
+            id: row.get("dept_id"),
+            code: row.get("dept_code"),
+            name: row.get("dept_name")
+        },
+        serial: row.get::<i64, _>("course_serial"),
+        name: row.get("course_name"),
+        description: row.get("course_description"),
+        book: row.get("course_book"),
+        prompt: row.get("course_prompt"),
+        status: row.get("course_status"),
+        weeks: Vec::new()
+    };
+
+    let week_rows = sqlx::query(
+        r#"
+        SELECT id, serial, text, date, is_complete
+        FROM weeks
+        WHERE course_id = ?
+        ORDER BY serial
+        "#
+    )
+    .bind(&course_id)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    use std::collections::HashMap;
+    let mut week_map: HashMap<String, Week> = HashMap::new();
+    let mut week_ids = Vec::new();
+
+    for row in week_rows {
+        let id: String = row.get("id");
+        week_ids.push(id.clone());
+
+        week_map.insert(
+            id.clone(),
+            Week {
+                id,
+                serial: row.get::<i64, _>("serial"),
+                text: row.get("text"),
+                date: row.get::<Option<DateTime<Utc>>, _>("date"),
+                is_complete: row.get("is_complete"),
+                targets: Vec::new()
+            }
+        );
+    }
+
+    if !week_ids.is_empty() {
+        let placeholders = week_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+
+        let query = format!(
+            r#"
+            SELECT id, week_id, serial, text, source, is_complete
+            FROM targets
+            WHERE week_id IN ({})
+            ORDER BY serial
+            "#,
+            placeholders
+        );
+
+        let mut q = sqlx::query(&query);
+        for id in &week_ids {
+            q = q.bind(id);
+        }
+
+        let target_rows = q
+            .fetch_all(pool)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        for row in target_rows {
+            let week_id: String = row.get("week_id");
+
+            if let Some(week) = week_map.get_mut(&week_id) {
+                week.targets.push(Target {
+                    id: row.get("id"),
+                    serial: row.get::<i64, _>("serial"),
+                    text: row.get("text"),
+                    source: row.get("source"),
+                    is_complete: row.get("is_complete")
+                });
+            }
+        }
+    }
+
+    let mut weeks: Vec<Week> = week_map.into_values().collect();
+    weeks.sort_by_key(|w| w.serial);
+
+    course.weeks = weeks;
+
+    Ok(course)
+}
+
+#[tauri::command]
 pub async fn get_courses(
     state: State<'_, DatabaseState>,
 ) -> Result<Vec<CoursePreview>, String> {
@@ -186,10 +313,109 @@ pub async fn get_courses(
             department: Department {
                 id: row.get("dept_id"),
                 code: row.get("dept_code"),
-                name: row.get("dept_name"),
-            },
+                name: row.get("dept_name")
+            }
         }
     }).collect();
 
     Ok(courses)
+}
+
+#[tauri::command]
+pub async fn update_course(
+    state: State<'_, DatabaseState>,
+    course_id: String,
+    draft: CourseContentDraft,
+) -> Result<(), String> {
+    let pool: &SqlitePool = &state.0;
+    let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
+
+    sqlx::query(
+        r#"
+        UPDATE courses
+        SET name = ?, description = ?, book = ?
+        WHERE id = ?
+        "#
+    )
+    .bind(&draft.name)
+    .bind(&draft.description)
+    .bind(&draft.book)
+    .bind(&course_id)
+    .execute(&mut *tx)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    let existing_week_ids: Vec<String> = sqlx::query_scalar(
+        r#"
+        SELECT id FROM weeks WHERE course_id = ?
+        "#
+    )
+    .bind(&course_id)
+    .fetch_all(&mut *tx)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    if !existing_week_ids.is_empty() {
+        let placeholders = existing_week_ids
+            .iter()
+            .map(|_| "?")
+            .collect::<Vec<_>>()
+            .join(",");
+
+        let delete_targets = format!(
+            "DELETE FROM targets WHERE week_id IN ({})",
+            placeholders
+        );
+
+        let mut q = sqlx::query(&delete_targets);
+        for id in &existing_week_ids {
+            q = q.bind(id);
+        }
+
+        q.execute(&mut *tx).await.map_err(|e| e.to_string())?;
+    }
+
+    sqlx::query("DELETE FROM weeks WHERE course_id = ?")
+        .bind(&course_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    for week in draft.weeks {
+        let week_id = uuid::Uuid::new_v4().to_string();
+
+        sqlx::query(
+            r#"
+            INSERT INTO weeks (id, course_id, serial, text)
+            VALUES (?, ?, ?, ?)
+            "#
+        )
+        .bind(&week_id)
+        .bind(&course_id)
+        .bind(week.serial)
+        .bind(&week.text)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+
+        for target in week.targets {
+            sqlx::query(
+                r#"
+                INSERT INTO targets (id, week_id, serial, text, source)
+                VALUES (?, ?, ?, ?, ?)
+                "#
+            )
+            .bind(uuid::Uuid::new_v4().to_string())
+            .bind(&week_id)
+            .bind(target.serial)
+            .bind(&target.text)
+            .bind(&target.source)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        }
+    }
+
+    tx.commit().await.map_err(|e| e.to_string())?;
+    Ok(())
 }

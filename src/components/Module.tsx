@@ -11,7 +11,7 @@ function Module({ module } : { module: Module }) {
           <p className="text-sm font-medium">WEEK-{week.serial}</p>
           <p className="text-lg mt-1">{week.text}</p>
           {week.targets.map((target) => (
-            <p className="mt-1">{target.text}</p>
+            <p key={target.id} className="mt-1">{target.text}</p>
           ))}
         </div>
       ))}

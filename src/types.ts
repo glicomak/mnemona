@@ -9,17 +9,33 @@ type Department = {
   name: string
 }
 
-type Targets = {
+type TargetDraft = {
+  serial: number,
+  text: string,
+  source: string
+}
+
+type Target = {
   id: string,
   serial: number,
-  text: string
+  text: string,
+  source: string,
+  isComplete: boolean
+}
+
+type WeekDraft = {
+  serial: number,
+  text: string,
+  targets: TargetDraft[]
 }
 
 type Week = {
   id: string,
   serial: number,
   text: string,
-  targets: Targets[]
+  date: string | null,
+  isComplete: boolean,
+  targets: Target[]
 }
 
 type CourseDraft = {
@@ -30,6 +46,13 @@ type CourseDraft = {
   prompt: string
 }
 
+type CourseContentDraft = {
+  name: string,
+  description: string,
+  book: string,
+  weeks: WeekDraft[]
+}
+
 type Course = {
   id: string,
   department: Department,
@@ -37,6 +60,8 @@ type Course = {
   name: string,
   description: string,
   book: string,
+  prompt: string,
+  isComplete: boolean,
   weeks: Week[]
 }
 

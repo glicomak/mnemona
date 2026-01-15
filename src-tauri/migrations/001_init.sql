@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS courses (
     description TEXT,
     book TEXT,
     prompt TEXT,
+    status TEXT NOT NULL DEFAULT 'draft',
     FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE CASCADE
 );
 
@@ -20,6 +21,8 @@ CREATE TABLE IF NOT EXISTS weeks (
     course_id TEXT NOT NULL,
     serial INTEGER NOT NULL,
     text TEXT NOT NULL,
+    date DATE,
+    is_complete BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE
 );
 
@@ -28,6 +31,8 @@ CREATE TABLE IF NOT EXISTS targets (
     week_id TEXT NOT NULL,
     serial INTEGER NOT NULL,
     text TEXT NOT NULL,
+    source TEXT NOT NULL,
+    is_complete BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (week_id) REFERENCES weeks (id) ON DELETE CASCADE
 );
 
