@@ -101,7 +101,7 @@ ${JSON.stringify(courses, null, 4)}
       <h1 className="text-xl my-4">Generate</h1>
       <textarea
         className="bg-[#f4f5f6] w-full h-50 p-4 rounded-xl outline-none"
-        placeholder="Enter your prompt here..."
+        placeholder="Enter your prompt here."
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
       />

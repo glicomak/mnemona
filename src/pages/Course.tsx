@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
 
 import { GoogleGenAI } from "@google/genai";
@@ -8,6 +8,8 @@ import WeekBox from "../components/WeekBox";
 
 function Course() {
   const { id } = useParams();
+
+  const navigate = useNavigate();
 
   const [prompt, setPrompt] = useState<string>('');
   const [course, setCourse] = useState<Course | null>(null);
@@ -114,18 +116,59 @@ ${JSON.stringify(courseContent, null, 4)}
   return (
     course && (
       <div>
+        <button
+          onClick={() => navigate("/courses")}
+          className="text-sm text-neutral-600 hover:text-neutral-900 my-4 flex items-center gap-1 cursor-pointer"
+        >
+          ← Courses
+        </button>
         <p className="text-sm font-medium mt-4">{course?.department.code}-{course?.serial}</p>
         <p className="text-lg mt-1">{course?.name}</p>
         <p className="mt-1">{course?.description}</p>
         <p className="mt-1 mb-4">{course?.book}</p>
-        <textarea
-          className="bg-[#f4f5f6] w-full h-50 p-4 rounded-xl outline-none"
-          placeholder="Enter your prompt here..."
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-        />
-        <button onClick={enhance} className="button-primary mr-2">Prompt</button>
-        {course?.weeks.map((week) => <WeekBox key={week.id} week={week} />)}
+        <div className="my-4">
+          <div className="inline-flex bg-[#f0f2f5] rounded-2xl p-1">
+            {(["draft", "inactive", "active", "complete"] as const).map((status) => {
+              const selected = course?.status === status;
+
+              return (
+                <button
+                  key={status}
+                  onClick={async () => {
+                    if (!course || selected) return;
+
+                    await invoke("update_course_status", {
+                      courseId: course.id,
+                      status,
+                    });
+
+                    await invoke<Course>("get_course", { courseId: id }).then((data) => setCourse(data));
+                  }}
+                  className={`
+                    px-4 py-2 text-sm capitalize cursor-pointer transition
+                    ${selected
+                      ? "bg-white text-neutral-900 rounded-xl shadow-sm"
+                      : "text-neutral-500 hover:text-neutral-800"}
+                  `}
+                >
+                  {status}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        {course?.status === "draft" && (
+          <>
+            <textarea
+              className="bg-[#f4f5f6] w-full h-50 p-4 rounded-xl outline-none"
+              placeholder="Enter your prompt here."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+            />
+            <button onClick={enhance} className="button-primary mr-2">Prompt</button>
+          </>
+        )}
+        {course?.weeks.map((week) => <WeekBox key={week.id} week={week} courseStatus={course?.status} />)}
       </div>
     )
   );

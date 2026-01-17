@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{NaiveDate};
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::Type;
 
@@ -45,12 +45,13 @@ pub struct Week {
     pub id: String,
     pub serial: i64,
     pub text: String,
-    pub date: Option<DateTime<Utc>>,
+    pub date: Option<NaiveDate>,
     pub is_complete: bool,
     pub targets: Vec<Target>
 }
 
 #[derive(Debug, Clone, Serialize, Type)]
+#[serde(rename_all = "lowercase")]
 #[sqlx(type_name = "TEXT")]
 #[sqlx(rename_all = "lowercase")]
 pub enum CourseStatus {
@@ -94,7 +95,8 @@ pub struct Course {
 #[derive(Debug, Serialize)]
 pub struct CoursePreview {
     pub id: String,
-    pub department: Department,
+    pub department: String,
     pub serial: i64,
-    pub name: String
+    pub name: String,
+    pub status: CourseStatus
 }

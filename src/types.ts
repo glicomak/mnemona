@@ -61,15 +61,16 @@ type Course = {
   description: string,
   book: string,
   prompt: string,
-  isComplete: boolean,
+  status: string,
   weeks: Week[]
 }
 
 type CoursePreview = {
   id: string,
-  department: Department,
+  department: string,
   serial: number,
-  name: string
+  name: string,
+  status: string
 }
 
 type Module = {

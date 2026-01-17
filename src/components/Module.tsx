@@ -4,7 +4,7 @@ function Module({ module } : { module: Module }) {
 
   return (
     <div className="bg-[#f0f2f5] w-full p-6 mb-4 rounded-xl">
-      <p className="text-sm font-medium">{course.department.code}-{course.serial}</p>
+      <p className="text-sm font-medium">{course.department}-{course.serial}</p>
       <p className="text-lg mt-1">{course.name}</p>
       {weeks.map((week) => (
         <div key={week.id} className="bg-[#e0e4ea] p-4 mt-4 rounded-xl">

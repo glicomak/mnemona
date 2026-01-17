@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{Datelike, NaiveDate};
 use sqlx::{SqlitePool, Row};
 use std::collections::HashMap;
 use tauri::State;
@@ -228,7 +228,7 @@ pub async fn get_course(
                 id,
                 serial: row.get::<i64, _>("serial"),
                 text: row.get("text"),
-                date: row.get::<Option<DateTime<Utc>>, _>("date"),
+                date: row.get::<Option<NaiveDate>, _>("date"),
                 is_complete: row.get("is_complete"),
                 targets: Vec::new()
             }
@@ -293,9 +293,8 @@ pub async fn get_courses(
           c.id          AS course_id,
           c.serial      AS course_serial,
           c.name        AS course_name,
-          d.id          AS dept_id,
-          d.code        AS dept_code,
-          d.name        AS dept_name
+          c.status      AS course_status,
+          d.code        AS dept_code
         FROM courses c
         JOIN departments d ON c.department_id = d.id
         ORDER BY d.code, c.serial
@@ -308,13 +307,10 @@ pub async fn get_courses(
     let courses = rows.into_iter().map(|row| {
         CoursePreview {
             id: row.get("course_id"),
+            department: row.get("dept_code"),
             serial: row.get::<i64, _>("course_serial"),
             name: row.get("course_name"),
-            department: Department {
-                id: row.get("dept_id"),
-                code: row.get("dept_code"),
-                name: row.get("dept_name")
-            }
+            status: row.get("course_status")
         }
     }).collect();
 
@@ -418,4 +414,89 @@ pub async fn update_course(
 
     tx.commit().await.map_err(|e| e.to_string())?;
     Ok(())
+}
+
+#[tauri::command]
+pub async fn update_course_status(
+    state: State<'_, DatabaseState>,
+    course_id: String,
+    status: String,
+) -> Result<(), String> {
+    use chrono::{Duration, Utc, Weekday};
+    use sqlx::SqlitePool;
+
+    let pool: &SqlitePool = &state.0;
+
+    match status.as_str() {
+        "draft" | "inactive" | "complete" => {
+            sqlx::query(
+                r#"
+                UPDATE courses
+                SET status = ?
+                WHERE id = ?
+                "#,
+            )
+            .bind(&status)
+            .bind(&course_id)
+            .execute(pool)
+            .await
+            .map_err(|e| e.to_string())?;
+
+            Ok(())
+        }
+
+        "active" => {
+            sqlx::query(
+                r#"
+                UPDATE courses
+                SET status = ?
+                WHERE id = ?
+                "#,
+            )
+            .bind(&status)
+            .bind(&course_id)
+            .execute(pool)
+            .await
+            .map_err(|e| e.to_string())?;
+
+            let weeks: Vec<String> = sqlx::query_scalar(
+                r#"
+                SELECT id
+                FROM weeks
+                WHERE course_id = ?
+                ORDER BY serial ASC
+                "#,
+            )
+            .bind(&course_id)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| e.to_string())?;
+
+            let mut date = Utc::now().date_naive();
+            while date.weekday() != Weekday::Mon {
+                date -= Duration::days(1);
+            }
+
+            for (i, week_id) in weeks.iter().enumerate() {
+                let week_date = date + Duration::weeks(i as i64);
+
+                sqlx::query(
+                    r#"
+                    UPDATE weeks
+                    SET date = ?
+                    WHERE id = ?
+                    "#,
+                )
+                .bind(week_date)
+                .bind(week_id)
+                .execute(pool)
+                .await
+                .map_err(|e| e.to_string())?;
+            }
+
+            Ok(())
+        }
+
+        _ => Err("invalid status".to_string()),
+    }
 }
