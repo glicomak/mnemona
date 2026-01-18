@@ -84,7 +84,7 @@ function Courses() {
         <p className="my-4">Generate courses to get started.</p>
       ) : (
         <>
-          <div className="grid grid-cols-[15%_1fr_10%_10%] px-6 py-3 text-sm font-medium text-neutral-600">
+          <div className="grid grid-cols-[15%_1fr_10%_15%] px-6 py-3 text-sm font-medium text-neutral-600">
             <span
               className="cursor-pointer select-none"
               onClick={() => onHeaderClick("code")}
