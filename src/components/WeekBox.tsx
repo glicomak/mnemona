@@ -68,7 +68,7 @@ function WeekBox({ week, courseStatus }: { week: Week, courseStatus: string }) {
               {isComplete ? "Complete" : "Incomplete"}
             </button>
           )}
-          {(courseStatus == "active" || courseStatus === "complete") && (
+          {((courseStatus == "inactive" && week.isComplete) || courseStatus == "active" || courseStatus === "complete") && (
             <p className="text-sm text-neutral-700 mt-2 mr-2 font-medium">
               {week.date && formatWeekRange(week.date)}
             </p>

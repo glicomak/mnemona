@@ -464,6 +464,7 @@ pub async fn update_course_status(
                 SELECT id
                 FROM weeks
                 WHERE course_id = ?
+                AND is_complete = false
                 ORDER BY serial ASC
                 "#,
             )
