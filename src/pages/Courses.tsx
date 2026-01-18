@@ -1,11 +1,71 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
+import CourseBox from "../components/CourseBox";
+
 function Courses() {
-  const navigate = useNavigate();
+  type SortKey = "code" | "name" | "status";
+
+  type SortRule = {
+    key: SortKey;
+    reverse: boolean;
+  };
 
   const [courses, setCourses] = useState<CoursePreview[]>([]);
+  const [sortRule, setSortRule] = useState<SortRule>({
+    key: "status",
+    reverse: false,
+  });
+
+  useEffect(() => {
+    invoke<CoursePreview[]>("get_courses").then(setCourses);
+  }, []);
+
+  const statusOrder: Record<CoursePreview["status"], number> = {
+    active: 0,
+    inactive: 1,
+    draft: 2,
+    complete: 3,
+  };
+
+  function compareCourses(
+    a: CoursePreview,
+    b: CoursePreview,
+    rule: SortRule
+  ): number {
+    let result = 0;
+
+    switch (rule.key) {
+      case "code": {
+        const aCode = `${a.department}-${a.serial}`;
+        const bCode = `${b.department}-${b.serial}`;
+        result = aCode.localeCompare(bCode);
+        break;
+      }
+
+      case "name":
+        result = a.name.localeCompare(b.name);
+        break;
+
+      case "status":
+        result = statusOrder[a.status] - statusOrder[b.status];
+        break;
+    }
+
+    return rule.reverse ? -result : result;
+  }
+
+  const sortedCourses = useMemo(() => {
+    return [...courses].sort((a, b) => compareCourses(a, b, sortRule));
+  }, [courses, sortRule]);
+
+  function onHeaderClick(key: SortKey) {
+    setSortRule(prev =>
+      prev.key === key
+        ? { key, reverse: !prev.reverse }
+        : { key, reverse: false }
+    );
+  }
 
   const statusColorMap = new Map();
   statusColorMap.set("draft", "#545454");
@@ -25,31 +85,29 @@ function Courses() {
       ) : (
         <>
           <div className="grid grid-cols-[15%_1fr_10%] px-6 py-3 text-sm font-medium text-neutral-600">
-            <span>Code</span>
-            <span>Course</span>
-            <span>Status</span>
+            <span
+              className="cursor-pointer select-none"
+              onClick={() => onHeaderClick("code")}
+            >
+              Code
+            </span>
+            <span
+              className="cursor-pointer select-none"
+              onClick={() => onHeaderClick("name")}
+            >
+              Course
+            </span>
+            <span
+              className="cursor-pointer select-none"
+              onClick={() => onHeaderClick("status")}
+            >
+              Status
+            </span>
           </div>
 
           <div className="space-y-2 mb-4">
-            {courses.map(course => (
-              <div
-                key={course.id}
-                onClick={() => navigate(`/courses/${course.id}`)}
-                className="
-                  grid grid-cols-[15%_1fr_10%]
-                  items-center
-                  px-6 py-4
-                  bg-[#f0f2f5]
-                  rounded-xl
-                  cursor-pointer
-                  hover:bg-[#e4e7ec]
-                  transition
-                "
-              >
-                <span className="text-sm font-medium">{course.department}-{course.serial}</span>
-                <span>{course.name}</span>
-                <span className="text-sm font-medium capitalize" style={{ color: statusColorMap.get(course.status) }}>{course.status}</span>
-              </div>
+            {sortedCourses.map(course => (
+              <CourseBox key={course.id} course={course} statusColorMap={statusColorMap} />
             ))}
           </div>
         </>
