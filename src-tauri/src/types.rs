@@ -50,6 +50,13 @@ pub struct Week {
     pub targets: Vec<Target>
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WeeksPreview {
+    pub num_complete: i64,
+    pub num_total: i64
+}
+
 #[derive(Debug, Clone, Serialize, Type)]
 #[serde(rename_all = "lowercase")]
 #[sqlx(type_name = "TEXT")]
@@ -98,5 +105,6 @@ pub struct CoursePreview {
     pub department: String,
     pub serial: i64,
     pub name: String,
-    pub status: CourseStatus
+    pub status: CourseStatus,
+    pub weeks: WeeksPreview
 }

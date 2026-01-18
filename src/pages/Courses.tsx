@@ -69,9 +69,9 @@ function Courses() {
 
   const statusColorMap = new Map();
   statusColorMap.set("draft", "#545454");
-  statusColorMap.set("inactive", "#bd3533");
-  statusColorMap.set("active", "#2583a8");
-  statusColorMap.set("complete", "#13a838");
+  statusColorMap.set("inactive", "#eb0e3a");
+  statusColorMap.set("active", "#1585e8");
+  statusColorMap.set("complete", "#09b04c");
 
   useEffect(() => {
     invoke<CoursePreview[]>("get_courses").then((data) => setCourses(data));
@@ -84,7 +84,7 @@ function Courses() {
         <p className="my-4">Generate courses to get started.</p>
       ) : (
         <>
-          <div className="grid grid-cols-[15%_1fr_10%] px-6 py-3 text-sm font-medium text-neutral-600">
+          <div className="grid grid-cols-[15%_1fr_10%_10%] px-6 py-3 text-sm font-medium text-neutral-600">
             <span
               className="cursor-pointer select-none"
               onClick={() => onHeaderClick("code")}
@@ -102,6 +102,11 @@ function Courses() {
               onClick={() => onHeaderClick("status")}
             >
               Status
+            </span>
+            <span
+              className="cursor-pointer select-none"
+            >
+              Progress
             </span>
           </div>
 

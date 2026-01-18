@@ -5,7 +5,7 @@ use tauri::State;
 use uuid::Uuid;
 
 use crate::db::DatabaseState;
-use crate::types::{Course, CourseContentDraft, CourseDraft, CoursePreview, Department, DepartmentDraft, Target, Week};
+use crate::types::{Course, CourseContentDraft, CourseDraft, CoursePreview, Department, DepartmentDraft, Target, Week, WeeksPreview};
 
 async fn generate_course_serial(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
@@ -290,13 +290,23 @@ pub async fn get_courses(
     let rows = sqlx::query(
         r#"
         SELECT
-          c.id          AS course_id,
-          c.serial      AS course_serial,
-          c.name        AS course_name,
-          c.status      AS course_status,
-          d.code        AS dept_code
+            c.id     AS course_id,
+            c.serial AS course_serial,
+            c.name   AS course_name,
+            c.status AS course_status,
+            d.code   AS dept_code,
+
+            COUNT(w.id) AS weeks_total,
+            COALESCE(
+                SUM(CASE WHEN w.is_complete = TRUE THEN 1 ELSE 0 END),
+                0
+            ) AS weeks_complete
         FROM courses c
-        JOIN departments d ON c.department_id = d.id
+        JOIN departments d
+            ON c.department_id = d.id
+        LEFT JOIN weeks w
+            ON w.course_id = c.id
+        GROUP BY c.id
         ORDER BY d.code, c.serial
         "#
     )
@@ -304,15 +314,20 @@ pub async fn get_courses(
     .await
     .map_err(|e| e.to_string())?;
 
-    let courses = rows.into_iter().map(|row| {
-        CoursePreview {
+    let courses = rows
+        .into_iter()
+        .map(|row| CoursePreview {
             id: row.get("course_id"),
             department: row.get("dept_code"),
             serial: row.get::<i64, _>("course_serial"),
             name: row.get("course_name"),
-            status: row.get("course_status")
-        }
-    }).collect();
+            status: row.get("course_status"),
+            weeks: WeeksPreview {
+                num_complete: row.get::<i64, _>("weeks_complete"),
+                num_total: row.get::<i64, _>("weeks_total"),
+            },
+        })
+        .collect();
 
     Ok(courses)
 }
