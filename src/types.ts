@@ -73,7 +73,7 @@ type CoursePreview = {
   status: string
 }
 
-type Module = {
+type ScheduleItem = {
   course: CoursePreview,
   weeks: Week[]
 }

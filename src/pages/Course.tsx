@@ -168,7 +168,11 @@ ${JSON.stringify(courseContent, null, 4)}
             <button onClick={enhance} className="button-primary mr-2">Prompt</button>
           </>
         )}
-        {course?.weeks.map((week) => <WeekBox key={week.id} week={week} courseStatus={course?.status} />)}
+        {course?.weeks.map((week) => (
+          <div className="mb-4">
+            <WeekBox key={week.id} week={week} courseStatus={course?.status} />
+          </div>
+        ))}
       </div>
     )
   );

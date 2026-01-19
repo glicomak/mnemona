@@ -108,3 +108,18 @@ pub struct CoursePreview {
     pub status: CourseStatus,
     pub weeks: WeeksPreview
 }
+
+#[derive(Debug, Serialize)]
+pub struct CourseHeader {
+    pub id: String,
+    pub department: String,
+    pub serial: i64,
+    pub name: String,
+    pub status: CourseStatus
+}
+
+#[derive(Debug, Serialize)]
+pub struct ScheduleItem {
+    pub course: CourseHeader,
+    pub weeks: Vec<Week>
+}

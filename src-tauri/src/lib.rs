@@ -6,6 +6,7 @@ use tauri::Manager;
 
 use crate::commands::courses::{create_courses, get_course, get_courses, update_course, update_course_status};
 use crate::commands::departments::get_departments;
+use crate::commands::schedule::get_schedule;
 use crate::commands::targets::change_target_status;
 use crate::commands::weeks::change_week_status;
 
@@ -33,6 +34,7 @@ pub fn run() {
             update_course,
             update_course_status,
             get_departments,
+            get_schedule,
             change_target_status,
             change_week_status
         ])

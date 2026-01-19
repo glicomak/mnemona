@@ -1,4 +1,4 @@
-use chrono::{Datelike, NaiveDate};
+use chrono::{Datelike, Duration, Local, NaiveDate, Weekday};
 use sqlx::{SqlitePool, Row};
 use std::collections::HashMap;
 use tauri::State;
@@ -214,7 +214,6 @@ pub async fn get_course(
     .await
     .map_err(|e| e.to_string())?;
 
-    use std::collections::HashMap;
     let mut week_map: HashMap<String, Week> = HashMap::new();
     let mut week_ids = Vec::new();
 
@@ -437,9 +436,6 @@ pub async fn update_course_status(
     course_id: String,
     status: String,
 ) -> Result<(), String> {
-    use chrono::{Duration, Utc, Weekday};
-    use sqlx::SqlitePool;
-
     let pool: &SqlitePool = &state.0;
 
     match status.as_str() {
@@ -488,7 +484,7 @@ pub async fn update_course_status(
             .await
             .map_err(|e| e.to_string())?;
 
-            let mut date = Utc::now().date_naive();
+            let mut date = Local::now().date_naive();
             while date.weekday() != Weekday::Mon {
                 date -= Duration::days(1);
             }

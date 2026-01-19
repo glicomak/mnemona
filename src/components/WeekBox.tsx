@@ -26,15 +26,15 @@ function WeekBox({ week, courseStatus }: { week: Week, courseStatus: string }) {
     end.setDate(start.getDate() + 6);
 
     const options: Intl.DateTimeFormatOptions = { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
     };
 
     const startFormatted = start.toLocaleDateString('en-US', options);
     const endFormatted = end.toLocaleDateString('en-US', options);
 
-    return `${startFormatted} to ${endFormatted}`;
+    return `${startFormatted} - ${endFormatted}`;
   };
 
   function toggleStatus() {
@@ -44,7 +44,7 @@ function WeekBox({ week, courseStatus }: { week: Week, courseStatus: string }) {
   }
 
   return (
-    <div className="bg-[#e0e4ea] p-4 mb-4 rounded-xl">
+    <div className="bg-[#e0e4ea] p-4 rounded-xl">
       <div className="flex items-start justify-between gap-4">
         <div className={isComplete ? "text-[#676767]" : ""}>
           <p className="text-sm font-medium">WEEK-{week.serial}</p>

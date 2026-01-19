@@ -1,120 +1,127 @@
-import Module from "../components/Module";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+
+import ScheduleItem from "../components/ScheduleItem";
+
+import { Calendar } from "lucide-react";
 
 function Dashboard() {
-  const modules: Module[] = [
-    {
-      course: {
-        id: "1",
-        department: "CS",
-        serial: 100,
-        name: "Object-Oriented Programming",
-        status: "active"
-      },
-      weeks: [
-        {
-          id: "1",
-          serial: 1,
-          text: "Pillars of OOP",
-          date: null,
-          isComplete: false,
-          targets: [
-            {
-              id: "1",
-              serial: 1,
-              text: "Abstraction",
-              source: "TBA",
-              isComplete: false
-            },
-            {
-              id: "2",
-              serial: 2,
-              text: "Encapsulation",
-              source: "TBA",
-              isComplete: false
-            },
-            {
-              id: "3",
-              serial: 3,
-              text: "Inheritance",
-              source: "TBA",
-              isComplete: false
-            },
-            {
-              id: "4",
-              serial: 4,
-              text: "Polymorphism",
-              source: "TBA",
-              isComplete: false
-            }
-          ]
-        },
-        {
-          id: "2",
-          serial: 2,
-          text: "OOP in Java",
-          date: null,
-          isComplete: false,
-          targets: [
-            {
-              id: "5",
-              serial: 1,
-              text: "Classes",
-              source: "TBA",
-              isComplete: false
-            },
-            {
-              id: "6",
-              serial: 2,
-              text: "Interfaces",
-              source: "TBA",
-              isComplete: false
-            }
-          ]
+  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [open, setOpen] = useState(false);
+
+  const dateRef = useRef<HTMLInputElement>(null);
+
+  const weekMonday = useMemo(
+    () => getMonday(selectedDate),
+    [selectedDate]
+  );
+
+  const weekRangeLabel = useMemo(
+    () => formatWeekRange(weekMonday),
+    [weekMonday]
+  );
+
+  function getMonday(date: Date): Date {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = (day + 6) % 7;
+    d.setDate(d.getDate() - diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function formatDate(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+      date.getDate()
+    ).padStart(2, "0")}`;
+  }
+
+  function formatWeekRange(monday: Date): string {
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    return `${formatShort(monday)} - ${formatShort(sunday)}`;
+  }
+
+  function formatShort(date: Date): string {
+    return date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: 'numeric'
+    });
+  }
+
+  useEffect(() => {
+    invoke<ScheduleItem[]>("get_schedule", {
+      date: formatDate(weekMonday),
+    }).then((data) => {
+      const sortedData = [...data].sort((a, b) => {
+        const deptCompare = a.course.department.localeCompare(b.course.department);
+        
+        if (deptCompare === 0) {
+          return a.course.serial - b.course.serial;
         }
-      ]
-    },
-    {
-      course: {
-        id: "2",
-        department: "CS",
-        serial: 101,
-        name: "Discrete Structures",
-        status: "active"
-      },
-      weeks: [
-        {
-          id: "3",
-          serial: 5,
-          text: "Graphs and Trees",
-          date: null,
-          isComplete: false,
-          targets: [
-            {
-              id: "7",
-              serial: 1,
-              text: "BFS and DFS",
-              source: "TBA",
-              isComplete: false
-            },
-            {
-              id: "8",
-              serial: 2,
-              text: "Dijkstra's Algorithm",
-              source: "TBA",
-              isComplete: false
-            }
-          ]
-        }
-      ]
+        
+        return deptCompare;
+      });
+
+      setSchedule(sortedData);
+    });
+  }, [weekMonday]);
+
+  useEffect(() => {
+    function onClickOutside() {
+      dateRef.current?.blur();
     }
-  ]
+
+    window.addEventListener("click", onClickOutside);
+    return () => window.removeEventListener("click", onClickOutside);
+  }, []);
 
   return (
     <div>
-      <h1 className="text-xl my-4">Dashboard</h1>
-      {modules.map((module) => (
-        <Module key={module.course.id} module={module} />
-      ))}
+      <div className="flex items-center justify-between my-4">
+        <h1 className="text-xl">Dashboard</h1>
+
+        <div className="flex items-center gap-3 bg-[#f0f2f5] px-4 py-2 rounded-xl">
+          <span className="text-sm text-black/60">{weekRangeLabel}</span>
+
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(true);
+              requestAnimationFrame(() => dateRef.current?.click());
+            }}
+            className="p-1 rounded-md hover:bg-black/10 transition"
+          >
+            
+            <Calendar className="h-4 w-4 text-black/60" />
+          </button>
+
+          <input
+            ref={dateRef}
+            type="date"
+            value={formatDate(selectedDate)}
+            onChange={(e) => {
+              setSelectedDate(new Date(e.target.value));
+              setOpen(false);
+            }}
+            className={open ? "absolute opacity-0" : "hidden"}
+          />
+        </div>
+      </div>
+
+      {schedule.length > 0 ? (
+        schedule.map(item => (
+          <ScheduleItem
+            key={item.course.id}
+            scheduleItem={item}
+          />
+        ))
+      ) : (
+        <p className="my-4">Nothing scheduled this week!</p>
+      )}
     </div>
   );
 }
