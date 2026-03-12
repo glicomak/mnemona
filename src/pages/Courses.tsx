@@ -67,6 +67,11 @@ function Courses() {
     );
   }
 
+  async function deleteCourse(courseId: string) {
+    await invoke("delete_course", { courseId });
+    invoke<CoursePreview[]>("get_courses").then(setCourses);
+  }
+
   const statusColorMap = new Map();
   statusColorMap.set("draft", "#545454");
   statusColorMap.set("inactive", "#eb0e3a");
@@ -84,7 +89,7 @@ function Courses() {
         <p className="my-4">Generate courses to get started.</p>
       ) : (
         <>
-          <div className="grid grid-cols-[15%_1fr_10%_15%] px-6 py-3 text-sm font-medium text-neutral-600">
+          <div className="grid grid-cols-[15%_1fr_10%_10%_15%] px-6 py-3 text-sm font-medium text-neutral-600">
             <span
               className="cursor-pointer select-none"
               onClick={() => onHeaderClick("code")}
@@ -96,6 +101,11 @@ function Courses() {
               onClick={() => onHeaderClick("name")}
             >
               Course
+            </span>
+            <span
+              className="cursor-pointer select-none"
+            >
+              Actions
             </span>
             <span
               className="cursor-pointer select-none"
@@ -112,7 +122,7 @@ function Courses() {
 
           <div className="space-y-2 mb-4">
             {sortedCourses.map(course => (
-              <CourseBox key={course.id} course={course} statusColorMap={statusColorMap} />
+              <CourseBox key={course.id} course={course} statusColorMap={statusColorMap} deleteCourse={() => deleteCourse(course.id)} />
             ))}
           </div>
         </>

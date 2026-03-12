@@ -512,3 +512,31 @@ pub async fn update_course_status(
         _ => Err("invalid status".to_string()),
     }
 }
+
+#[tauri::command]
+pub async fn delete_course(
+    state: State<'_, DatabaseState>,
+    course_id: String,
+) -> Result<(), String> {
+    let pool: &SqlitePool = &state.0;
+
+    sqlx::query("DELETE FROM targets WHERE week_id IN (SELECT id FROM weeks WHERE course_id = ?)")
+    .bind(&course_id)
+    .execute(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    sqlx::query("DELETE FROM weeks WHERE course_id = ?")
+    .bind(&course_id)
+    .execute(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    sqlx::query("DELETE FROM courses WHERE id = ?")
+    .bind(&course_id)
+    .execute(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+
+    Ok(())
+}

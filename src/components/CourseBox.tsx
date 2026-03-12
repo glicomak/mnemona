@@ -1,8 +1,13 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function CourseBox({ course, statusColorMap }: { course: any, statusColorMap: Map<string, string> }) {
+import { TrashIcon } from "lucide-react";
+
+export default function CourseBox({ course, statusColorMap, deleteCourse }: { course: any, statusColorMap: Map<string, string>, deleteCourse: () => void }) {
   const navigate = useNavigate();
+
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
   const color = statusColorMap.get(course.status) ?? "#999999";
 
   const blobs = useMemo(() => {
@@ -46,9 +51,22 @@ export default function CourseBox({ course, statusColorMap }: { course: any, sta
         </div>
       )}
 
-      <div className="relative z-10 grid grid-cols-[15%_1fr_10%_15%] items-center w-full">
+      <div className="relative z-10 grid grid-cols-[15%_1fr_10%_10%_15%] items-center w-full">
         <span className="text-sm font-medium">{course.department}-{course.serial}</span>
         <span>{course.name}</span>
+        <span className="text-xs tabular-nums text-black/60">
+          <button className="cursor-pointer p-1 rounded-full transition-colors" onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (isDeleting) {
+              deleteCourse();
+            } else {
+              setIsDeleting(true);
+            }
+          }}>
+            <TrashIcon className="w-4 h-4" />
+          </button>
+        </span>
         <span className="text-sm font-medium capitalize" style={{ color }}>{course.status}</span>
         {course.status !== "draft" && (
           <div className="flex items-center gap-2">

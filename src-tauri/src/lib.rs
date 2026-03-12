@@ -4,7 +4,7 @@ pub mod types;
 
 use tauri::Manager;
 
-use crate::commands::courses::{create_courses, get_course, get_courses, update_course, update_course_status};
+use crate::commands::courses::{create_courses, delete_course, get_course, get_courses, update_course, update_course_status};
 use crate::commands::departments::get_departments;
 use crate::commands::schedule::get_schedule;
 use crate::commands::targets::change_target_status;
@@ -33,6 +33,7 @@ pub fn run() {
             get_courses,
             update_course,
             update_course_status,
+            delete_course,
             get_departments,
             get_schedule,
             change_target_status,
