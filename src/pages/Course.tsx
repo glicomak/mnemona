@@ -11,7 +11,7 @@ function Course() {
 
   const navigate = useNavigate();
 
-  const [prompt, setPrompt] = useState<string>('');
+  const [prompt, setPrompt] = useState<string>("");
   const [course, setCourse] = useState<Course | null>(null);
 
   const courseContent = useMemo<CourseContentDraft | null>(() => {
@@ -27,13 +27,11 @@ function Course() {
         targets: week.targets.map((target) => ({
           serial: target.serial,
           text: target.text,
-          source: target.source
-        }))
-      }))
+          source: target.source,
+        })),
+      })),
     };
   }, [course]);
-
-  const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_GEMINI_KEY});
 
   useEffect(() => {
     invoke<Course>("get_course", { courseId: id }).then((data) => {
@@ -46,6 +44,14 @@ function Course() {
 
   async function enhance() {
     try {
+      const token = await invoke<string | null>("get_llm_token");
+
+      if (!token) {
+        console.error("No LLM token configured.");
+        return;
+      }
+
+      const ai = new GoogleGenAI({ apiKey: token });
       const fullPrompt = `
 You are an AI university course generator.
 Your task is to given a course, make adjustements to it as per the user's prompt.
