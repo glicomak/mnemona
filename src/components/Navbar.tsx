@@ -39,6 +39,17 @@ function Navbar() {
           >
             Generate
           </NavLink>
+
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              isActive
+                ? "text-black"
+                : "text-neutral-500 hover:text-black transition"
+            }
+          >
+            Settings
+          </NavLink>
         </nav>
       </div>
     </header>

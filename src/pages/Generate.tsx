@@ -7,11 +7,9 @@ import { GoogleGenAI } from "@google/genai";
 function Generate() {
   const navigate = useNavigate();
 
-  const [prompt, setPrompt] = useState<string>('');
+  const [prompt, setPrompt] = useState<string>("");
   const [departments, setDepartments] = useState<DepartmentDraft[]>([]);
   const [courses, setCourses] = useState<CourseDraft[]>([]);
-
-  const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_GEMINI_KEY});
 
   useEffect(() => {
     invoke<DepartmentDraft[]>("get_departments").then((data) => setDepartments(data));
@@ -19,6 +17,14 @@ function Generate() {
 
   async function enhance() {
     try {
+      const token = await invoke<string | null>("get_llm_token");
+
+      if (!token) {
+        console.error("No LLM token configured.");
+        return;
+      }
+
+      const ai = new GoogleGenAI({ apiKey: token });
       const fullPrompt = `
 You are an AI university course generator.
 Your task is to given a list of courses, make adjustements to it as per the user's prompt.
